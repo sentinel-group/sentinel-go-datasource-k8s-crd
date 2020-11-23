@@ -18,11 +18,13 @@ package controllers
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/alibaba/sentinel-golang/core/flow"
 	"github.com/alibaba/sentinel-golang/logging"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	k8sApiError "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -55,11 +57,11 @@ const (
 
 func (r *FlowRulesReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	log := r.Logger
-	log.Info("receive FlowRules", "namespace", req.NamespacedName.String())
+	log := r.Logger.WithValues("effectiveNs", r.Namespace, "effectiveCrName", r.EffectiveCrName, "req", req.String())
+	log.Info("receive FlowRules")
 
 	if req.Namespace != r.Namespace {
-		log.V(int(logging.WarnLevel)).Info("ignore unmatched namespace.", "namespace", r.Namespace, "req", req.String())
+		log.V(int(logging.WarnLevel)).Info("ignore unmatched namespace.")
 		return ctrl.Result{
 			Requeue:      false,
 			RequeueAfter: 0,
@@ -67,7 +69,7 @@ func (r *FlowRulesReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	if req.Name != r.EffectiveCrName {
-		log.V(int(logging.WarnLevel)).Info("ignore unmatched cr.", "cr", r.EffectiveCrName, "req", req.String())
+		log.V(int(logging.WarnLevel)).Info("ignore unmatched cr.")
 		return ctrl.Result{
 			Requeue:      false,
 			RequeueAfter: 0,
@@ -77,22 +79,38 @@ func (r *FlowRulesReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// your logic here
 	flowRulesCR := &datasourcev1.FlowRules{}
 	if err := r.Get(ctx, req.NamespacedName, flowRulesCR); err != nil {
-		log.Error(err, "Fail to get datasourcev1.FlowRules.")
-		return ctrl.Result{
-			Requeue:      false,
-			RequeueAfter: 0,
-		}, err
+		k8sApiErr, ok := err.(*k8sApiError.StatusError)
+		if !ok {
+			log.Error(err, "Fail to get datasourcev1.FlowRules.")
+			return ctrl.Result{
+				Requeue:      false,
+				RequeueAfter: 0,
+			}, nil
+		}
+		if k8sApiErr.Status().Code != http.StatusNotFound {
+			log.Error(err, "Fail to get datasourcev1.FlowRules.")
+			return ctrl.Result{
+				Requeue:      false,
+				RequeueAfter: 0,
+			}, nil
+		}
+		log.Info("datasourcev1.FlowRules had been deleted.")
+		// cr had been deleted
+		flowRulesCR = nil
 	}
-	log.Info("Receive datasourcev1.FlowRules", "rules:", flowRulesCR.Spec.Rules)
 
-	flowRules := r.assembleFlowRules(flowRulesCR)
+	var flowRules []*flow.Rule
+	if flowRulesCR != nil {
+		log.Info("Receive datasourcev1.FlowRules", "rules:", flowRulesCR.Spec.Rules)
+		flowRules = r.assembleFlowRules(flowRulesCR)
+	}
 	_, err := flow.LoadRules(flowRules)
 	if err != nil {
 		log.Error(err, "Fail to Load flow.Rules")
 		return ctrl.Result{
 			Requeue:      false,
 			RequeueAfter: 0,
-		}, err
+		}, nil
 	}
 	return ctrl.Result{}, nil
 }

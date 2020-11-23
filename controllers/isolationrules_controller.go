@@ -18,10 +18,12 @@ package controllers
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/alibaba/sentinel-golang/core/isolation"
 	"github.com/alibaba/sentinel-golang/logging"
 	"github.com/go-logr/logr"
+	k8sApiError "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -43,11 +45,11 @@ type IsolationRulesReconciler struct {
 
 func (r *IsolationRulesReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	log := r.Logger
-	log.Info("receive IsolationRules", "namespace", req.NamespacedName.String())
+	log := r.Logger.WithValues("effectiveNs", r.Namespace, "effectiveCrName", r.EffectiveCrName, "req", req.String())
+	log.Info("receive IsolationRules")
 
 	if req.Namespace != r.Namespace {
-		log.V(int(logging.WarnLevel)).Info("ignore unmatched namespace.", "namespace", r.Namespace, "req", req.String())
+		log.V(int(logging.WarnLevel)).Info("ignore unmatched namespace.")
 		return ctrl.Result{
 			Requeue:      false,
 			RequeueAfter: 0,
@@ -55,7 +57,7 @@ func (r *IsolationRulesReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	}
 
 	if req.Name != r.EffectiveCrName {
-		log.V(int(logging.WarnLevel)).Info("ignore unmatched cr.", "cr", r.EffectiveCrName, "req", req.String())
+		log.V(int(logging.WarnLevel)).Info("ignore unmatched cr.")
 		return ctrl.Result{
 			Requeue:      false,
 			RequeueAfter: 0,
@@ -64,22 +66,37 @@ func (r *IsolationRulesReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 
 	isolationRulesCR := &datasourcev1.IsolationRules{}
 	if err := r.Get(ctx, req.NamespacedName, isolationRulesCR); err != nil {
-		log.Error(err, "Fail to get datasourcev1.IsolationRules.")
-		return ctrl.Result{
-			Requeue:      false,
-			RequeueAfter: 0,
-		}, err
+		k8sApiErr, ok := err.(*k8sApiError.StatusError)
+		if !ok {
+			log.Error(err, "Fail to get datasourcev1.IsolationRules.")
+			return ctrl.Result{
+				Requeue:      false,
+				RequeueAfter: 0,
+			}, nil
+		}
+		if k8sApiErr.Status().Code != http.StatusNotFound {
+			log.Error(err, "Fail to get datasourcev1.IsolationRules.")
+			return ctrl.Result{
+				Requeue:      false,
+				RequeueAfter: 0,
+			}, nil
+		}
+		log.Info("datasourcev1.IsolationRules had been deleted.")
+		isolationRulesCR = nil
 	}
-	log.Info("Get datasourcev1.IsolationRules", "rules:", isolationRulesCR.Spec.Rules)
-	// your logic here
-	isolationRules := make([]*isolation.Rule, 0, len(isolationRulesCR.Spec.Rules))
-	for _, r := range isolationRulesCR.Spec.Rules {
-		isolationRules = append(isolationRules, &isolation.Rule{
-			ID:         r.ID,
-			Resource:   r.Resource,
-			MetricType: isolation.Concurrency,
-			Threshold:  uint32(r.Threshold),
-		})
+
+	var isolationRules []*isolation.Rule
+	if isolationRulesCR != nil {
+		log.Info("Get datasourcev1.IsolationRules", "rules:", isolationRulesCR.Spec.Rules)
+		isolationRules = make([]*isolation.Rule, 0, len(isolationRulesCR.Spec.Rules))
+		for _, r := range isolationRulesCR.Spec.Rules {
+			isolationRules = append(isolationRules, &isolation.Rule{
+				ID:         r.ID,
+				Resource:   r.Resource,
+				MetricType: isolation.Concurrency,
+				Threshold:  uint32(r.Threshold),
+			})
+		}
 	}
 
 	_, err := isolation.LoadRules(isolationRules)

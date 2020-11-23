@@ -1,4 +1,4 @@
-apiVersion: datasource.sentinel.io/v1alpha1
+apiVersion: datasource.sentinel.io/v1
 kind: CircuitBreakerRules
 metadata:
   name: sentinel-go-circuitbreaker-rules

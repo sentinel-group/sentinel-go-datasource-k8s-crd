@@ -18,6 +18,8 @@ package controllers
 
 import (
 	"context"
+	k8sApiError "k8s.io/apimachinery/pkg/api/errors"
+	"net/http"
 
 	"github.com/alibaba/sentinel-golang/core/system"
 	"github.com/alibaba/sentinel-golang/logging"
@@ -44,11 +46,11 @@ type SystemRulesReconciler struct {
 
 func (r *SystemRulesReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	log := r.Logger
-	log.Info("receive SystemRules", "namespace", req.NamespacedName.String())
+	log := r.Logger.WithValues("effectiveNs", r.Namespace, "effectiveCrName", r.EffectiveCrName, "req", req.String())
+	log.Info("receive SystemRules")
 
 	if req.Namespace != r.Namespace {
-		log.V(int(logging.WarnLevel)).Info("ignore unmatched namespace.", "namespace", r.Namespace, "req", req.String())
+		log.V(int(logging.WarnLevel)).Info("ignore unmatched namespace.")
 		return ctrl.Result{
 			Requeue:      false,
 			RequeueAfter: 0,
@@ -56,7 +58,7 @@ func (r *SystemRulesReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 	}
 
 	if req.Name != r.EffectiveCrName {
-		log.V(int(logging.WarnLevel)).Info("ignore unmatched cr.", "cr", r.EffectiveCrName, "req", req.String())
+		log.V(int(logging.WarnLevel)).Info("ignore unmatched cr.")
 		return ctrl.Result{
 			Requeue:      false,
 			RequeueAfter: 0,
@@ -65,16 +67,31 @@ func (r *SystemRulesReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 
 	systemRulesCR := &datasourcev1.SystemRules{}
 	if err := r.Get(ctx, req.NamespacedName, systemRulesCR); err != nil {
-		log.Error(err, "Fail to get datasourcev1.SystemRules")
-		return ctrl.Result{
-			Requeue:      false,
-			RequeueAfter: 0,
-		}, err
+		k8sApiErr, ok := err.(*k8sApiError.StatusError)
+		if !ok {
+			log.Error(err, "Fail to get datasourcev1.SystemRules.")
+			return ctrl.Result{
+				Requeue:      false,
+				RequeueAfter: 0,
+			}, nil
+		}
+		if k8sApiErr.Status().Code != http.StatusNotFound {
+			log.Error(err, "Fail to get datasourcev1.SystemRules.")
+			return ctrl.Result{
+				Requeue:      false,
+				RequeueAfter: 0,
+			}, nil
+		}
+		log.Info("datasourcev1.SystemRules had been deleted.")
+		systemRulesCR = nil
 	}
 
-	log.Info("Receive datasourcev1.SystemRules", "rules:", systemRulesCR.Spec.Rules)
+	var systemRules []*system.Rule
+	if systemRulesCR == nil {
+		log.Info("Receive datasourcev1.SystemRules", "rules:", systemRulesCR.Spec.Rules)
+		systemRules = r.assembleSystemRules(systemRulesCR)
+	}
 
-	systemRules := r.assembleSystemRules(systemRulesCR)
 	_, err := system.LoadRules(systemRules)
 	if err != nil {
 		log.Error(err, "Fail to Load system.Rules")

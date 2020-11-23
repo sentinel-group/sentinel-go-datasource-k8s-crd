@@ -19,12 +19,14 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strconv"
 
 	"github.com/alibaba/sentinel-golang/core/hotspot"
 	"github.com/alibaba/sentinel-golang/logging"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	k8sApiError "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -50,11 +52,11 @@ type HotspotRulesReconciler struct {
 // +kubebuilder:rbac:groups=datasource.sentinel.io,resources=hotspotrules/status,verbs=get;update;patch
 func (r *HotspotRulesReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	log := r.Logger
-	log.Info("receive HotspotRules", "namespace", req.NamespacedName.String())
+	log := r.Logger.WithValues("effectiveNs", r.Namespace, "effectiveCrName", r.EffectiveCrName, "req", req.String())
+	log.Info("receive HotspotRules")
 
 	if req.Namespace != r.Namespace {
-		log.V(int(logging.WarnLevel)).Info("ignore unmatched namespace.", "namespace", r.Namespace, "req", req.String())
+		log.V(int(logging.WarnLevel)).Info("ignore unmatched namespace.")
 		return ctrl.Result{
 			Requeue:      false,
 			RequeueAfter: 0,
@@ -62,7 +64,7 @@ func (r *HotspotRulesReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	}
 
 	if req.Name != r.EffectiveCrName {
-		log.V(int(logging.WarnLevel)).Info("ignore unmatched cr.", "cr", r.EffectiveCrName, "req", req.String())
+		log.V(int(logging.WarnLevel)).Info("ignore unmatched cr.")
 		return ctrl.Result{
 			Requeue:      false,
 			RequeueAfter: 0,
@@ -71,15 +73,31 @@ func (r *HotspotRulesReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 
 	hotspotRulesCR := &datasourcev1.HotspotRules{}
 	if err := r.Get(ctx, req.NamespacedName, hotspotRulesCR); err != nil {
-		log.Error(err, "Fail to get datasourcev1.HotspotRules")
-		return ctrl.Result{
-			Requeue:      false,
-			RequeueAfter: 0,
-		}, err
+		k8sApiErr, ok := err.(*k8sApiError.StatusError)
+		if !ok {
+			log.Error(err, "Fail to get datasourcev1.HotspotRules.")
+			return ctrl.Result{
+				Requeue:      false,
+				RequeueAfter: 0,
+			}, nil
+		}
+		if k8sApiErr.Status().Code != http.StatusNotFound {
+			log.Error(err, "Fail to get datasourcev1.HotspotRules.")
+			return ctrl.Result{
+				Requeue:      false,
+				RequeueAfter: 0,
+			}, nil
+		}
+		log.Info("datasourcev1.CircuitBreakerRules had been deleted.")
+		hotspotRulesCR = nil
 	}
-	log.Info("Receive datasourcev1.HotspotRules", "rules:", hotspotRulesCR.Spec.Rules)
 
-	hotspotRules := r.assembleHotspotRules(hotspotRulesCR)
+	var hotspotRules []*hotspot.Rule
+	if hotspotRulesCR != nil {
+		log.Info("Receive datasourcev1.HotspotRules", "rules:", hotspotRulesCR.Spec.Rules)
+		hotspotRules = r.assembleHotspotRules(hotspotRulesCR)
+	}
+
 	_, err := hotspot.LoadRules(hotspotRules)
 	if err != nil {
 		log.Error(err, "Fail to Load hotspot.Rules")
