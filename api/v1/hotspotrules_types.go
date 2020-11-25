@@ -61,7 +61,7 @@ type HotspotRule struct {
 
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Enum=Reject;Throttling
-	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Optional
 	ControlBehavior string `json:"controlBehavior"`
 
 	// +kubebuilder:validation:Type=integer

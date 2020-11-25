@@ -38,12 +38,12 @@ type FlowRule struct {
 
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Enum=Direct;WarmUp
-	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Optional
 	TokenCalculateStrategy string `json:"tokenCalculateStrategy"`
 
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Enum=Reject;Throttling
-	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Optional
 	ControlBehavior string `json:"controlBehavior"`
 
 	// +kubebuilder:validation:Type=integer
@@ -54,7 +54,7 @@ type FlowRule struct {
 
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Enum=CurrentResource;AssociatedResource
-	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Optional
 	RelationStrategy string `json:"relationStrategy"`
 
 	// +kubebuilder:validation:Type=string
@@ -65,7 +65,7 @@ type FlowRule struct {
 
 	// +kubebuilder:validation:Type=integer
 	// +kubebuilder:validation:Format=int32
-	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Optional
 	MaxQueueingTimeMs int32 `json:"maxQueueingTimeMs"`
 

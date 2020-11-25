@@ -1,0 +1,88 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - datasource.sentinel.io
+  resources:
+  - circuitbreakerrules
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - datasource.sentinel.io
+  resources:
+  - circuitbreakerrules/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - datasource.sentinel.io
+  resources:
+  - flowrules
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - datasource.sentinel.io
+  resources:
+  - flowrules/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - datasource.sentinel.io
+  resources:
+  - isolationrules
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - datasource.sentinel.io
+  resources:
+  - isolationrules/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - datasource.sentinel.io
+  resources:
+  - systemrules
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - datasource.sentinel.io
+  resources:
+  - systemrules/status
+  verbs:
+  - get
+  - patch
+  - update

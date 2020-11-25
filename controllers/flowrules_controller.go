@@ -35,10 +35,10 @@ import (
 // FlowRulesReconciler reconciles a FlowRules object
 type FlowRulesReconciler struct {
 	client.Client
-	Logger          logr.Logger
-	Scheme          *runtime.Scheme
-	Namespace       string
-	EffectiveCrName string
+	Logger         logr.Logger
+	Scheme         *runtime.Scheme
+	Namespace      string
+	ExpectedCrName string
 }
 
 const (
@@ -57,19 +57,17 @@ const (
 
 func (r *FlowRulesReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	log := r.Logger.WithValues("effectiveNs", r.Namespace, "effectiveCrName", r.EffectiveCrName, "req", req.String())
-	log.Info("receive FlowRules")
+	log := r.Logger.WithValues("expectedNamespace", r.Namespace, "expectedCrName", r.ExpectedCrName, "req", req.String())
 
 	if req.Namespace != r.Namespace {
-		log.V(int(logging.WarnLevel)).Info("ignore unmatched namespace.")
+		log.V(int(logging.DebugLevel)).Info("ignore unmatched namespace")
 		return ctrl.Result{
 			Requeue:      false,
 			RequeueAfter: 0,
 		}, nil
 	}
 
-	if req.Name != r.EffectiveCrName {
-		log.V(int(logging.WarnLevel)).Info("ignore unmatched cr.")
+	if req.Name != r.ExpectedCrName {
 		return ctrl.Result{
 			Requeue:      false,
 			RequeueAfter: 0,
@@ -133,6 +131,8 @@ func (r *FlowRulesReconciler) assembleFlowRules(rs *datasourcev1.FlowRules) []*f
 		}
 
 		switch rule.TokenCalculateStrategy {
+		case "":
+			cbRule.TokenCalculateStrategy = flow.Direct
 		case DirectTokenCalculateStrategy:
 			cbRule.TokenCalculateStrategy = flow.Direct
 		case WarmUpTokenCalculateStrategy:
@@ -143,6 +143,8 @@ func (r *FlowRulesReconciler) assembleFlowRules(rs *datasourcev1.FlowRules) []*f
 		}
 
 		switch rule.ControlBehavior {
+		case "":
+			cbRule.ControlBehavior = flow.Reject
 		case RejectControlBehavior:
 			cbRule.ControlBehavior = flow.Reject
 		case ThrottlingControlBehavior:
@@ -153,6 +155,8 @@ func (r *FlowRulesReconciler) assembleFlowRules(rs *datasourcev1.FlowRules) []*f
 		}
 
 		switch rule.RelationStrategy {
+		case "":
+			cbRule.RelationStrategy = flow.CurrentResource
 		case CurrentResourceRelationStrategy:
 			cbRule.RelationStrategy = flow.CurrentResource
 		case AssociatedResourceRelationStrategy:

@@ -6,14 +6,13 @@ import (
 	"github.com/alibaba/sentinel-golang/logging"
 	"github.com/alibaba/sentinel-golang/util"
 	"github.com/pkg/errors"
+	datasourcev1 "github.com/sentinel-group/sentinel-go-datasource-k8s-crd/api/v1"
+	"github.com/sentinel-group/sentinel-go-datasource-k8s-crd/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	datasourcev1 "github.com/sentinel-group/sentinel-go-datasource-k8s-crd/api/v1"
-	"github.com/sentinel-group/sentinel-go-datasource-k8s-crd/controllers"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -109,11 +108,11 @@ func (k *DataSource) RegisterController(crd CRDType, crName string) error {
 	switch crd {
 	case FlowRulesCRD:
 		controller := &controllers.FlowRulesReconciler{
-			Client:          k.crdManager.GetClient(),
-			Logger:          ctrl.Log.WithName("controllers").WithName("FlowRules"),
-			Scheme:          k.crdManager.GetScheme(),
-			Namespace:       k.namespace,
-			EffectiveCrName: crName,
+			Client:         k.crdManager.GetClient(),
+			Logger:         ctrl.Log.WithName("controllers").WithName("FlowRules"),
+			Scheme:         k.crdManager.GetScheme(),
+			Namespace:      k.namespace,
+			ExpectedCrName: crName,
 		}
 		err := controller.SetupWithManager(k.crdManager)
 		if err != nil {
@@ -124,11 +123,11 @@ func (k *DataSource) RegisterController(crd CRDType, crName string) error {
 		return nil
 	case IsolationRulesCRD:
 		controller := &controllers.IsolationRulesReconciler{
-			Client:          k.crdManager.GetClient(),
-			Logger:          ctrl.Log.WithName("controllers").WithName("IsolationRules"),
-			Scheme:          k.crdManager.GetScheme(),
-			Namespace:       k.namespace,
-			EffectiveCrName: crName,
+			Client:         k.crdManager.GetClient(),
+			Logger:         ctrl.Log.WithName("controllers").WithName("IsolationRules"),
+			Scheme:         k.crdManager.GetScheme(),
+			Namespace:      k.namespace,
+			ExpectedCrName: crName,
 		}
 		err := controller.SetupWithManager(k.crdManager)
 		if err != nil {
@@ -139,11 +138,11 @@ func (k *DataSource) RegisterController(crd CRDType, crName string) error {
 		return nil
 	case CircuitBreakerRulesCRD:
 		controller := &controllers.CircuitBreakerRulesReconciler{
-			Client:          k.crdManager.GetClient(),
-			Logger:          ctrl.Log.WithName("controllers").WithName("CircuitBreakerRules"),
-			Scheme:          k.crdManager.GetScheme(),
-			Namespace:       k.namespace,
-			EffectiveCrName: crName,
+			Client:         k.crdManager.GetClient(),
+			Logger:         ctrl.Log.WithName("controllers").WithName("CircuitBreakerRules"),
+			Scheme:         k.crdManager.GetScheme(),
+			Namespace:      k.namespace,
+			ExpectedCrName: crName,
 		}
 		err := controller.SetupWithManager(k.crdManager)
 		if err != nil {
@@ -154,11 +153,11 @@ func (k *DataSource) RegisterController(crd CRDType, crName string) error {
 		return nil
 	case HotspotRulesCRD:
 		controller := &controllers.HotspotRulesReconciler{
-			Client:          k.crdManager.GetClient(),
-			Logger:          ctrl.Log.WithName("controllers").WithName("HotspotRules"),
-			Scheme:          k.crdManager.GetScheme(),
-			Namespace:       k.namespace,
-			EffectiveCrName: crName,
+			Client:         k.crdManager.GetClient(),
+			Logger:         ctrl.Log.WithName("controllers").WithName("HotspotRules"),
+			Scheme:         k.crdManager.GetScheme(),
+			Namespace:      k.namespace,
+			ExpectedCrName: crName,
 		}
 		err := controller.SetupWithManager(k.crdManager)
 		if err != nil {
@@ -169,11 +168,11 @@ func (k *DataSource) RegisterController(crd CRDType, crName string) error {
 		return nil
 	case SystemRulesCRD:
 		controller := &controllers.SystemRulesReconciler{
-			Client:          k.crdManager.GetClient(),
-			Logger:          ctrl.Log.WithName("controllers").WithName("SystemRules"),
-			Scheme:          k.crdManager.GetScheme(),
-			Namespace:       k.namespace,
-			EffectiveCrName: crName,
+			Client:         k.crdManager.GetClient(),
+			Logger:         ctrl.Log.WithName("controllers").WithName("SystemRules"),
+			Scheme:         k.crdManager.GetScheme(),
+			Namespace:      k.namespace,
+			ExpectedCrName: crName,
 		}
 		err := controller.SetupWithManager(k.crdManager)
 		if err != nil {

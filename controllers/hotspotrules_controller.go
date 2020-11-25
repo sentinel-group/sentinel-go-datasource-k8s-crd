@@ -42,29 +42,27 @@ const (
 // HotspotRulesReconciler reconciles a HotspotRules object
 type HotspotRulesReconciler struct {
 	client.Client
-	Logger          logr.Logger
-	Scheme          *runtime.Scheme
-	Namespace       string
-	EffectiveCrName string
+	Logger         logr.Logger
+	Scheme         *runtime.Scheme
+	Namespace      string
+	ExpectedCrName string
 }
 
 // +kubebuilder:rbac:groups=datasource.sentinel.io,resources=hotspotrules,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=datasource.sentinel.io,resources=hotspotrules/status,verbs=get;update;patch
 func (r *HotspotRulesReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	log := r.Logger.WithValues("effectiveNs", r.Namespace, "effectiveCrName", r.EffectiveCrName, "req", req.String())
-	log.Info("receive HotspotRules")
+	log := r.Logger.WithValues("expectedNamespace", r.Namespace, "expectedCrName", r.ExpectedCrName, "req", req.String())
 
 	if req.Namespace != r.Namespace {
-		log.V(int(logging.WarnLevel)).Info("ignore unmatched namespace.")
+		log.V(int(logging.DebugLevel)).Info("ignore unmatched namespace")
 		return ctrl.Result{
 			Requeue:      false,
 			RequeueAfter: 0,
 		}, nil
 	}
 
-	if req.Name != r.EffectiveCrName {
-		log.V(int(logging.WarnLevel)).Info("ignore unmatched cr.")
+	if req.Name != r.ExpectedCrName {
 		return ctrl.Result{
 			Requeue:      false,
 			RequeueAfter: 0,
@@ -138,6 +136,8 @@ func (r *HotspotRulesReconciler) assembleHotspotRules(rs *datasourcev1.HotspotRu
 		}
 
 		switch rule.ControlBehavior {
+		case "":
+			hotspotRule.ControlBehavior = hotspot.Reject
 		case RejectControlBehavior:
 			hotspotRule.ControlBehavior = hotspot.Reject
 		case ThrottlingControlBehavior:

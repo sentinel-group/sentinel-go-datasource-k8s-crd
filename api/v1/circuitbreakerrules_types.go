@@ -52,13 +52,13 @@ type CircuitBreakerRule struct {
 
 	// +kubebuilder:validation:Type=integer
 	// +kubebuilder:validation:Format=int32
-	// +kubebuilder:validation:Minimum=1000
+	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Optional
 	StatIntervalMs int32 `json:"statIntervalMs"`
 
 	// +kubebuilder:validation:Type=integer
 	// +kubebuilder:validation:Format=int64
-	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Optional
 	MaxAllowedRtMs int64 `json:"maxAllowedRtMs"`
 

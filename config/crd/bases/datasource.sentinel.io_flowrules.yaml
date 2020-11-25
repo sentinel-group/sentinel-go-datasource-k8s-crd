@@ -48,7 +48,7 @@ spec:
                     type: string
                   maxQueueingTimeMs:
                     format: int32
-                    minimum: 1
+                    minimum: 0
                     type: integer
                   refResource:
                     maxLength: 64
@@ -85,11 +85,8 @@ spec:
                     minimum: 1
                     type: integer
                 required:
-                - controlBehavior
-                - relationStrategy
                 - resource
                 - threshold
-                - tokenCalculateStrategy
                 type: object
               type: array
           type: object
