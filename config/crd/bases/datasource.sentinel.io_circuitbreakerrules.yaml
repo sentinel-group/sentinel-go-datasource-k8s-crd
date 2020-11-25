@@ -43,7 +43,7 @@ spec:
                     type: string
                   maxAllowedRtMs:
                     format: int64
-                    minimum: 1
+                    minimum: 0
                     type: integer
                   minRequestAmount:
                     format: int64
@@ -59,7 +59,7 @@ spec:
                     type: integer
                   statIntervalMs:
                     format: int32
-                    minimum: 1000
+                    minimum: 1
                     type: integer
                   strategy:
                     enum:

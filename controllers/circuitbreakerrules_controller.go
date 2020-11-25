@@ -35,10 +35,10 @@ import (
 // CircuitBreakerRulesReconciler reconciles a CircuitBreakerRules object
 type CircuitBreakerRulesReconciler struct {
 	client.Client
-	Logger          logr.Logger
-	Scheme          *runtime.Scheme
-	Namespace       string
-	EffectiveCrName string
+	Logger         logr.Logger
+	Scheme         *runtime.Scheme
+	Namespace      string
+	ExpectedCrName string
 }
 
 const (
@@ -52,19 +52,17 @@ const (
 
 func (r *CircuitBreakerRulesReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	log := r.Logger.WithValues("effectiveNs", r.Namespace, "effectiveCrName", r.EffectiveCrName, "req", req.String())
-	log.Info("receive CircuitBreakerRules")
+	log := r.Logger.WithValues("expectedNamespace", r.Namespace, "expectedCrName", r.ExpectedCrName, "req", req.String())
 
 	if req.Namespace != r.Namespace {
-		log.V(int(logging.WarnLevel)).Info("ignore unmatched namespace.")
+		log.V(int(logging.DebugLevel)).Info("ignore unmatched namespace")
 		return ctrl.Result{
 			Requeue:      false,
 			RequeueAfter: 0,
 		}, nil
 	}
 
-	if req.Name != r.EffectiveCrName {
-		log.V(int(logging.WarnLevel)).Info("ignore unmatched cr.")
+	if req.Name != r.ExpectedCrName {
 		return ctrl.Result{
 			Requeue:      false,
 			RequeueAfter: 0,

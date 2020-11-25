@@ -4,11 +4,13 @@ metadata:
   name: sentinel-go-flow-rules
 spec:
   rules:
+    - resource: simple-resource
+      threshold: 500
     - resource: abcde
       threshold: 100
       relationStrategy: CurrentResource
-      tokenCalculateStrategy: Direct
-      controlBehavior: Reject
+      controlBehavior: Throttling
+      maxQueueingTimeMs: 500
     - resource: abcd
       threshold: 200
       relationStrategy: CurrentResource
@@ -16,8 +18,4 @@ spec:
       controlBehavior: Reject
       warmUpPeriodSec: 20
       warmUpColdFactor: 3
-    - resource: abc
-      threshold: 300
-      relationStrategy: CurrentResource
-      tokenCalculateStrategy: Direct
-      controlBehavior: Reject
+

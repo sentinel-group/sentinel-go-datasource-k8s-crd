@@ -103,7 +103,6 @@ spec:
                     minimum: 0
                     type: integer
                 required:
-                - controlBehavior
                 - metricType
                 - paramIndex
                 - resource
