@@ -31,7 +31,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	datasourcev1 "github.com/sentinel-group/sentinel-go-datasource-k8s-crd/api/v1"
+	datasourcev1 "github.com/sentinel-group/sentinel-go-datasource-k8s-crd/api/v1alpha1"
 )
 
 const (

@@ -14,18 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1
+package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type CircuitBreakerRule struct {
+type IsolationRule struct {
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:MinLength=0
 	// +kubebuilder:validation:MaxLength=32
 	// +kubebuilder:validation:Optional
-	Id string `json:"id,omitempty"`
+	ID string `json:"id,omitempty"`
 
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:MinLength=1
@@ -33,81 +33,52 @@ type CircuitBreakerRule struct {
 	// +kubebuilder:validation:Required
 	Resource string `json:"resource"`
 
-	// +kubebuilder:validation:Type=string
-	// +kubebuilder:validation:Enum=SlowRequestRatio;ErrorRatio;ErrorCount
-	// +kubebuilder:validation:Required
-	Strategy string `json:"strategy"`
-
 	// +kubebuilder:validation:Type=integer
 	// +kubebuilder:validation:Format=int32
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Optional
-	RetryTimeoutMs int32 `json:"retryTimeoutMs"`
-
-	// +kubebuilder:validation:Type=integer
-	// +kubebuilder:validation:Format=int64
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Optional
-	MinRequestAmount int64 `json:"minRequestAmount"`
-
-	// +kubebuilder:validation:Type=integer
-	// +kubebuilder:validation:Format=int32
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Optional
-	StatIntervalMs int32 `json:"statIntervalMs"`
-
-	// +kubebuilder:validation:Type=integer
-	// +kubebuilder:validation:Format=int64
-	// +kubebuilder:validation:Minimum=0
-	// +kubebuilder:validation:Optional
-	MaxAllowedRtMs int64 `json:"maxAllowedRtMs"`
-
-	// +kubebuilder:validation:Type=integer
-	// +kubebuilder:validation:Format=int64
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Required
-	Threshold int64 `json:"threshold"`
+	Threshold int32 `json:"threshold"`
 }
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// CircuitBreakerRulesSpec defines the desired state of CircuitBreakerRules
-type CircuitBreakerRulesSpec struct {
+// IsolationRulesSpec defines the desired state of IsolationRules
+type IsolationRulesSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// +kubebuilder:validation:Type=array
 	// +kubebuilder:validation:Optional
-	Rules []CircuitBreakerRule `json:"rules"`
+	Rules []IsolationRule `json:"rules"`
 }
 
-// CircuitBreakerRulesStatus defines the observed state of CircuitBreakerRules
-type CircuitBreakerRulesStatus struct {
+// IsolationRulesStatus defines the observed state of IsolationRules
+type IsolationRulesStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
 // +kubebuilder:object:root=true
 
-// CircuitBreakerRules is the Schema for the circuitbreakerrules API
-type CircuitBreakerRules struct {
+// IsolationRules is the Schema for the isolationrules API
+type IsolationRules struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   CircuitBreakerRulesSpec   `json:"spec,omitempty"`
-	Status CircuitBreakerRulesStatus `json:"status,omitempty"`
+	Spec   IsolationRulesSpec   `json:"spec,omitempty"`
+	Status IsolationRulesStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// CircuitBreakerRulesList contains a list of CircuitBreakerRules
-type CircuitBreakerRulesList struct {
+// IsolationRulesList contains a list of IsolationRules
+type IsolationRulesList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []CircuitBreakerRules `json:"items"`
+	Items           []IsolationRules `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&CircuitBreakerRules{}, &CircuitBreakerRulesList{})
+	SchemeBuilder.Register(&IsolationRules{}, &IsolationRulesList{})
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/alibaba/sentinel-golang/logging"
 	"github.com/alibaba/sentinel-golang/util"
 	"github.com/pkg/errors"
-	datasourcev1 "github.com/sentinel-group/sentinel-go-datasource-k8s-crd/api/v1"
+	crdv1alpha1 "github.com/sentinel-group/sentinel-go-datasource-k8s-crd/api/v1alpha1"
 	"github.com/sentinel-group/sentinel-go-datasource-k8s-crd/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -24,7 +24,7 @@ var (
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 
-	_ = datasourcev1.AddToScheme(scheme)
+	_ = crdv1alpha1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
