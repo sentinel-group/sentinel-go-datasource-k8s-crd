@@ -1,4 +1,4 @@
-apiVersion: datasource.sentinel.io/v1
+apiVersion: datasource.sentinel.io/v1alpha1
 kind: SystemRules
 metadata:
   name: sentinel-go-system-rules

@@ -1,4 +1,4 @@
-apiVersion: datasource.sentinel.io/v1
+apiVersion: datasource.sentinel.io/v1alpha1
 kind: HotspotRules
 metadata:
   name: sentinel-go-hotspot-rules
