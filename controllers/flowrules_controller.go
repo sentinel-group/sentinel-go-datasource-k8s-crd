@@ -55,8 +55,7 @@ const (
 // +kubebuilder:rbac:groups=datasource.sentinel.io,resources=flowrules,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=datasource.sentinel.io,resources=flowrules/status,verbs=get;update;patch
 
-func (r *FlowRulesReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *FlowRulesReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Logger.WithValues("expectedNamespace", r.Namespace, "expectedCrName", r.ExpectedCrName, "req", req.String())
 
 	if req.Namespace != r.Namespace {

@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"context"
 	"strings"
 
 	"github.com/alibaba/sentinel-golang/logging"
@@ -57,7 +58,9 @@ type DataSource struct {
 	crdManager  ctrl.Manager
 	controllers map[CRDType]reconcile.Reconciler
 	namespace   string
-	stopChan    chan struct{}
+
+	ctx       context.Context
+	ctxCancel context.CancelFunc
 }
 
 // NewDataSource creates a K8S DataSource with given namespace
@@ -84,11 +87,13 @@ func NewDataSource(namespace string) (*DataSource, error) {
 		setupLog.Error(err, "unable to start manager")
 		return nil, err
 	}
+	ctx, cancel := context.WithCancel(context.Background())
 	k := &DataSource{
 		crdManager:  mgr,
 		controllers: make(map[CRDType]reconcile.Reconciler, 4),
 		namespace:   namespace,
-		stopChan:    make(chan struct{}),
+		ctx:         ctx,
+		ctxCancel:   cancel,
 	}
 	return k, nil
 }
@@ -119,7 +124,7 @@ func (k *DataSource) RegisterController(crd CRDType, crName string) error {
 			return err
 		}
 		k.controllers[FlowRulesCRD] = controller
-		setupLog.Info("succeed to register FlowRulesCRD Controller.")
+		setupLog.Info("Sentinel FlowRules CRD controller has been registered successfully")
 		return nil
 	case IsolationRulesCRD:
 		controller := &controllers.IsolationRulesReconciler{
@@ -134,7 +139,7 @@ func (k *DataSource) RegisterController(crd CRDType, crName string) error {
 			return err
 		}
 		k.controllers[IsolationRulesCRD] = controller
-		setupLog.Info("succeed to register IsolationRulesCRD Controller.")
+		setupLog.Info("Sentinel IsolationRules CRD controller has been registered successfully")
 		return nil
 	case CircuitBreakerRulesCRD:
 		controller := &controllers.CircuitBreakerRulesReconciler{
@@ -149,7 +154,7 @@ func (k *DataSource) RegisterController(crd CRDType, crName string) error {
 			return err
 		}
 		k.controllers[CircuitBreakerRulesCRD] = controller
-		setupLog.Info("succeed to register CircuitBreakerRulesCRD Controller.")
+		setupLog.Info("Sentinel CircuitBreakerRules CRD controller has been registered successfully")
 		return nil
 	case HotspotRulesCRD:
 		controller := &controllers.HotspotRulesReconciler{
@@ -164,7 +169,7 @@ func (k *DataSource) RegisterController(crd CRDType, crName string) error {
 			return err
 		}
 		k.controllers[HotspotRulesCRD] = controller
-		setupLog.Info("succeed to register HotspotRulesCRD Controller.")
+		setupLog.Info("Sentinel HotspotRules CRD controller has been registered successfully")
 		return nil
 	case SystemRulesCRD:
 		controller := &controllers.SystemRulesReconciler{
@@ -179,7 +184,7 @@ func (k *DataSource) RegisterController(crd CRDType, crName string) error {
 			return err
 		}
 		k.controllers[SystemRulesCRD] = controller
-		setupLog.Info("succeed to register SystemRulesCRD Controller.")
+		setupLog.Info("Sentinel SystemRules CRD controller has been registered successfully")
 		return nil
 	default:
 		return errors.Errorf("unsupported CRDType: %d", int(crd))
@@ -188,7 +193,7 @@ func (k *DataSource) RegisterController(crd CRDType, crName string) error {
 
 // Close exit the K8S DataSource
 func (k *DataSource) Close() error {
-	k.stopChan <- struct{}{}
+	k.ctxCancel()
 	return nil
 }
 
@@ -196,11 +201,11 @@ func (k *DataSource) Close() error {
 func (k *DataSource) Run() error {
 	// +kubebuilder:scaffold:builder
 	go util.RunWithRecover(func() {
-		setupLog.Info("starting manager")
-		if err := k.crdManager.Start(k.stopChan); err != nil {
-			setupLog.Error(err, "problem running manager")
+		setupLog.Info("Starting Sentinel CRD manager")
+		if err := k.crdManager.Start(k.ctx); err != nil {
+			setupLog.Error(err, "problem running Sentinel CRD manager")
 		}
-		setupLog.Info("k8s datasource exited")
+		setupLog.Info("Sentinel CRD data-source closed")
 	})
 	return nil
 }
