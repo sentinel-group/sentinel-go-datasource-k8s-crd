@@ -50,8 +50,7 @@ const (
 // +kubebuilder:rbac:groups=datasource.sentinel.io,resources=circuitbreakerrules,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=datasource.sentinel.io,resources=circuitbreakerrules/status,verbs=get;update;patch
 
-func (r *CircuitBreakerRulesReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *CircuitBreakerRulesReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Logger.WithValues("expectedNamespace", r.Namespace, "expectedCrName", r.ExpectedCrName, "req", req.String())
 
 	if req.Namespace != r.Namespace {

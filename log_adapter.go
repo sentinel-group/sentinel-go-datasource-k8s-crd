@@ -7,13 +7,17 @@ import (
 	"github.com/go-logr/logr"
 )
 
-// noopInfoLogger is a logr.InfoLogger that's always disabled, and does nothing.
-type noopInfoLogger struct{}
+// noopLogger is a logr.Logger that's always disabled, and does nothing.
+type noopLogger struct{}
 
-func (l *noopInfoLogger) Enabled() bool                   { return false }
-func (l *noopInfoLogger) Info(_ string, _ ...interface{}) {}
+func (l *noopLogger) Enabled() bool                             { return false }
+func (l *noopLogger) Info(_ string, _ ...interface{})           {}
+func (l *noopLogger) Error(_ error, _ string, _ ...interface{}) {}
+func (l *noopLogger) V(_ int) logr.Logger                       { return l }
+func (l *noopLogger) WithValues(_ ...interface{}) logr.Logger   { return l }
+func (l *noopLogger) WithName(_ string) logr.Logger             { return l }
 
-var disabledInfoLogger = &noopInfoLogger{}
+var disabledLogger = &noopLogger{}
 
 type k8SLogger struct {
 	l             logging.Logger
@@ -62,7 +66,7 @@ func (k *k8SLogger) Error(err error, msg string, keysAndValues ...interface{}) {
 	k.l.Error(err, k.buildNames()+msg, keysAndValues...)
 }
 
-func (k *k8SLogger) V(level int) logr.InfoLogger {
+func (k *k8SLogger) V(level int) logr.Logger {
 	if k.Enabled() {
 		names := make([]string, len(k.names))
 		copy(names, k.names)
@@ -75,7 +79,7 @@ func (k *k8SLogger) V(level int) logr.InfoLogger {
 			keysAndValues: kvs,
 		}
 	}
-	return disabledInfoLogger
+	return disabledLogger
 }
 
 func (k *k8SLogger) WithValues(keysAndValues ...interface{}) logr.Logger {
