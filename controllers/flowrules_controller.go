@@ -127,6 +127,7 @@ func (r *FlowRulesReconciler) assembleFlowRules(rs *datasourcev1.FlowRules) []*f
 			MaxQueueingTimeMs:      uint32(rule.MaxQueueingTimeMs),
 			WarmUpPeriodSec:        uint32(rule.WarmUpPeriodSec),
 			WarmUpColdFactor:       uint32(rule.WarmUpColdFactor),
+			StatIntervalInMs:       uint32(rule.StatIntervalInMs),
 		}
 
 		switch rule.TokenCalculateStrategy {
